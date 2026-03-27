@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect
+from flask import session
 import sqlite3
 import os
 from datetime import datetime, date
@@ -9,6 +10,8 @@ if not os.path.exists("database.db"):
     import init_db
 
 app = Flask(__name__)
+
+app.secret_key = "supersecretkey"
 
 # =========================
 # CONEXÃO
@@ -735,7 +738,13 @@ def proteger():
         return
 
     token = request.args.get("token")
-    if token != "21033007":
+
+    # se enviou token válido → salva sessão
+    if token == "21033007":
+        session["auth"] = True
+
+    # se não estiver autenticado → bloqueia
+    if not session.get("auth"):
         return "Acesso negado"
 # =========================
 # START
