@@ -9,9 +9,11 @@ from dateutil.relativedelta import relativedelta
 if not os.path.exists("database.db"):
     import init_db
 
-app = Flask(__name__)
+def get_user_id():
+    return session.get("user_id", 1)
 
-app.secret_key = "supersecretkey"
+app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "dev-key")
 
 # =========================
 # CONEXÃO
@@ -37,6 +39,28 @@ def get_mes_ano():
 @app.route("/")
 def home():
     return redirect("/dashboard")
+
+@app.route("/trocar-usuario/<int:user_id>")
+def trocar_usuario(user_id):
+    session["user_id"] = user_id
+    return redirect(request.referrer or "/dashboard")
+
+@app.context_processor
+def inject_usuarios():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, nome FROM usuarios")
+    usuarios = rows_to_dict(cursor.fetchall())
+
+    conn.close()
+
+    return dict(usuarios_global=usuarios)
+
+@app.context_processor
+def inject_user():
+    return dict(user_id_logado=get_user_id())
+
 
 # =========================
 # DASHBOARD
@@ -65,23 +89,29 @@ def dashboard():
     # =========================
     # GASTOS
     # =========================
+    
+    
+    user_id = get_user_id()
+
     if modo_anual:
         cursor.execute("""
             SELECT 
                 COALESCE(SUM(valor_previsto), 0),
                 COALESCE(SUM(valor_pago), 0)
             FROM gastos
-            WHERE strftime('%Y', data) = ?
-        """, (str(ano),))
+            WHERE usuario_id = ?
+            AND strftime('%Y', data) = ?
+        """, (user_id, str(ano)))
     else:
         cursor.execute("""
             SELECT 
                 COALESCE(SUM(valor_previsto), 0),
                 COALESCE(SUM(valor_pago), 0)
             FROM gastos
-            WHERE strftime('%m', data) = ? 
+            WHERE usuario_id = ?
+            AND strftime('%m', data) = ? 
             AND strftime('%Y', data) = ?
-        """, (f"{mes:02d}", str(ano)))
+        """, (user_id, f"{mes:02d}", str(ano)))
 
     total_previsto, total_pago = cursor.fetchone()
 
@@ -93,43 +123,41 @@ def dashboard():
                 COALESCE(SUM(valor_previsto), 0),
                 COALESCE(SUM(valor_pago), 0)
             FROM gastos
-            WHERE strftime('%Y', data) = ?
-        """, (str(ano),))
+            WHERE usuario_id = ?
+            AND strftime('%Y', data) = ?
+        """, (user_id, str(ano)))
     else:
         cursor.execute("""
-            SELECT 
-                COALESCE(SUM(valor_previsto), 0),
-                COALESCE(SUM(valor_pago), 0)
-            FROM gastos
-        WHERE strftime('%m', data) = ? 
+        SELECT 
+            COALESCE(SUM(valor_previsto), 0),
+            COALESCE(SUM(valor_pago), 0)
+        FROM gastos
+        WHERE usuario_id = ?
+        AND strftime('%m', data) = ? 
         AND strftime('%Y', data) = ?
-    """, (f"{mes:02d}", str(ano)))
+        """, (user_id, f"{mes:02d}", str(ano)))
 
     # =========================
     # GANHOS
     # =========================
-    cursor.execute("""
-        SELECT COALESCE(SUM(valor), 0)
-        FROM ganhos
-        WHERE strftime('%m', data) = ? 
-        AND strftime('%Y', data) = ?
-    """, (f"{mes:02d}", str(ano)))
-
-    total_ganhos = cursor.fetchone()[0]
 
     if modo_anual:
         cursor.execute("""
             SELECT COALESCE(SUM(valor), 0)
             FROM ganhos
-            WHERE strftime('%Y', data) = ?
-        """, (str(ano),))
+            WHERE usuario_id = ?
+            AND strftime('%Y', data) = ?
+        """, (user_id, str(ano)))
     else:
         cursor.execute("""
             SELECT COALESCE(SUM(valor), 0)
             FROM ganhos
-            WHERE strftime('%m', data) = ? 
+            WHERE usuario_id = ?
+            AND strftime('%m', data) = ? 
             AND strftime('%Y', data) = ?
-        """, (f"{mes:02d}", str(ano)))
+        """, (user_id, f"{mes:02d}", str(ano)))
+
+    total_ganhos = cursor.fetchone()[0]
 
     # =========================
     # SALDO
@@ -140,15 +168,16 @@ def dashboard():
     # POR CATEGORIA
     # =========================
     cursor.execute("""
-        SELECT 
-            COALESCE(c.nome, 'Sem categoria') as nome, 
-            SUM(g.valor_previsto) as total
-        FROM gastos g
-        LEFT JOIN categorias c ON g.categoria_id = c.id
-        WHERE strftime('%m', g.data) = ? 
-        AND strftime('%Y', g.data) = ?
-        GROUP BY c.nome
-    """, (f"{mes:02d}", str(ano)))
+    SELECT 
+        COALESCE(c.nome, 'Sem categoria') as nome, 
+        SUM(g.valor_previsto) as total
+    FROM gastos g
+    LEFT JOIN categorias c ON g.categoria_id = c.id
+    WHERE g.usuario_id = ?
+    AND strftime('%m', g.data) = ? 
+    AND strftime('%Y', g.data) = ?
+    GROUP BY c.nome
+    """, (user_id, f"{mes:02d}", str(ano)))
 
     categorias = rows_to_dict(cursor.fetchall())
 
@@ -156,14 +185,15 @@ def dashboard():
     # EVOLUÇÃO MENSAL
     # =========================
     cursor.execute("""
-        SELECT 
-            strftime('%m', data) as mes, 
-            SUM(valor_previsto) as total
-        FROM gastos
-        WHERE strftime('%Y', data) = ?
-        GROUP BY strftime('%m', data)
-        ORDER BY strftime('%m', data)
-    """, (str(ano),))
+    SELECT 
+        strftime('%m', data) as mes, 
+        SUM(valor_previsto) as total
+    FROM gastos
+    WHERE usuario_id = ?
+    AND strftime('%Y', data) = ?
+    GROUP BY strftime('%m', data)
+    ORDER BY strftime('%m', data)
+    """, (user_id, str(ano)))
 
     dados_mensais = rows_to_dict(cursor.fetchall())
 
@@ -174,28 +204,31 @@ def dashboard():
     ano_anterior = ano if mes > 1 else ano - 1
 
     cursor.execute("""
-        SELECT COALESCE(SUM(valor_previsto), 0)
-        FROM gastos
-        WHERE strftime('%m', data) = ? 
-        AND strftime('%Y', data) = ?
-    """, (f"{mes_anterior:02d}", str(ano_anterior)))
+    SELECT COALESCE(SUM(valor_previsto), 0)
+    FROM gastos
+    WHERE usuario_id = ?
+    AND strftime('%m', data) = ? 
+    AND strftime('%Y', data) = ?
+    """, (user_id, f"{mes_anterior:02d}", str(ano_anterior)))
 
     total_anterior = cursor.fetchone()[0]
 
     # =========================
-    # CARTÃO (CORRIGIDO - DÍVIDA REAL)
+    # CARTÃO
     # =========================
     cursor.execute("""
-        SELECT 
-            c.id,
-            c.nome,
-            c.limite,
-            COALESCE(SUM(g.valor_previsto - g.valor_pago), 0) as gasto
-        FROM cartoes c
-        LEFT JOIN gastos g 
-            ON g.cartao_id = c.id
-        GROUP BY c.id
-    """)
+    SELECT 
+        c.id,
+        c.nome,
+        c.limite,
+        COALESCE(SUM(g.valor_previsto - g.valor_pago), 0) as gasto
+    FROM cartoes c
+    LEFT JOIN gastos g 
+        ON g.cartao_id = c.id
+        AND g.usuario_id = ?
+    WHERE c.usuario_id = ?
+    GROUP BY c.id
+    """, (user_id, user_id))
 
     cartoes_dashboard = rows_to_dict(cursor.fetchall())
 
@@ -206,11 +239,13 @@ def dashboard():
         else:
             c["percentual"] = 0
 
+    # FORA do loop
     cursor.execute("""
-        SELECT COALESCE(SUM(valor_previsto - valor_pago), 0)
-        FROM gastos
-        WHERE cartao_id IS NOT NULL
-    """)
+    SELECT COALESCE(SUM(valor_previsto - valor_pago), 0)
+    FROM gastos
+    WHERE usuario_id = ?
+    AND cartao_id IS NOT NULL
+    """, (user_id,))
 
     total_cartao = cursor.fetchone()[0]
 
@@ -225,14 +260,15 @@ def dashboard():
 
     # Ganhos por categoria
     cursor.execute("""
-        SELECT 
-            COALESCE(tipo, 'Sem categoria') as nome,
-            SUM(valor) as total
-        FROM ganhos
-        WHERE strftime('%m', data) = ?
-        AND strftime('%Y', data) = ?
-        GROUP BY tipo
-    """, (f"{mes:02d}", str(ano)))
+    SELECT 
+        COALESCE(tipo, 'Sem categoria') as nome,
+        SUM(valor) as total
+    FROM ganhos
+    WHERE usuario_id = ?
+    AND strftime('%m', data) = ?
+    AND strftime('%Y', data) = ?
+    GROUP BY tipo
+    """, (user_id, f"{mes:02d}", str(ano)))
     ganhos_categoria = rows_to_dict(cursor.fetchall())
 
     conn.close()
@@ -264,17 +300,21 @@ def gastos():
     conn = get_db()
     cursor = conn.cursor()
 
+    user_id = get_user_id()
     mes = request.args.get("mes", type=int)
     ano = request.args.get("ano", type=int)
 
     if not mes or not ano:
         mes, ano = get_mes_ano()
 
+    # =========================
+    # POST (SALVAR GASTO)
+    # =========================
     if request.method == "POST":
-        descricao = request.form["descricao"]
-        valor = float(request.form["valor"])
-        data = request.form["data"]
-        categoria_id = int(request.form["categoria_id"])
+        descricao = request.form.get("descricao")
+        valor = float(request.form.get("valor", 0))
+        data = request.form.get("data")
+        categoria_id = int(request.form.get("categoria_id", 0))
         parcelas = int(request.form.get("parcelas", 1))
 
         tipo = request.form.get("tipo", "variavel")
@@ -285,12 +325,15 @@ def gastos():
 
         data_compra = datetime.strptime(data, "%Y-%m-%d")
 
-        # REGRA CARTÃO
+        # =========================
+        # CALCULAR DATA PRIMEIRA PARCELA
+        # =========================
         if cartao_id:
             cursor.execute("""
                 SELECT dia_vencimento, dia_fechamento 
-                FROM cartoes WHERE id = ?
-            """, (cartao_id,))
+                FROM cartoes 
+                WHERE id = ? AND usuario_id = ?
+            """, (cartao_id, user_id))
             
             cartao = cursor.fetchone()
 
@@ -298,13 +341,11 @@ def gastos():
                 dia_fechamento = cartao["dia_fechamento"]
                 dia_vencimento = cartao["dia_vencimento"]
 
-                # Define mês base da fatura
                 if data_compra.day <= dia_fechamento:
                     meses_adicionar = 1
                 else:
                     meses_adicionar = 2
 
-                # Calcula mês da fatura
                 data_fatura = data_compra + relativedelta(months=meses_adicionar)
 
                 ultimo_dia = (data_fatura + relativedelta(day=31)).day
@@ -316,18 +357,20 @@ def gastos():
         else:
             data_primeira = data_compra
 
+        # =========================
+        # GERAR PARCELAS
+        # =========================
         valor_parcela = round(valor / parcelas, 2)
 
         for i in range(parcelas):
-
             data_parcela = data_primeira + relativedelta(months=i)
 
-            # 🔥 AGORA SIM
             if cartao_id:
                 cursor.execute("""
-                    INSERT OR IGNORE INTO faturas (cartao_id, mes, ano, pago)
-                    VALUES (?, ?, ?, 0)
+                INSERT OR IGNORE INTO faturas (usuario_id, cartao_id, mes, ano, pago)
+                VALUES (?, ?, ?, ?, 0)
                 """, (
+                    user_id,
                     cartao_id,
                     data_parcela.month,
                     data_parcela.year
@@ -339,12 +382,13 @@ def gastos():
             )
 
             cursor.execute("""
-                INSERT INTO gastos (
-                    descricao, valor_previsto, valor_pago,
-                    data, categoria_id, parcela_atual,
-                    parcelas_total, cartao_id, tipo, pago
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO gastos (
+                descricao, valor_previsto, valor_pago,
+                data, categoria_id, parcela_atual,
+                parcelas_total, cartao_id, tipo, pago,
+                usuario_id
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 descricao,
                 valor_final,
@@ -355,58 +399,65 @@ def gastos():
                 parcelas,
                 cartao_id,
                 tipo,
-                pago
+                pago,
+                user_id
             ))
 
         conn.commit()
 
+        # AJAX
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return {"success": True}
 
-        if not mes or not ano:
-            mes, ano = get_mes_ano()
+        return redirect(f"/gastos?mes={mes}&ano={ano}")
+
+    # =========================
+    # GET (LISTAGEM)
+    # =========================
 
     cursor.execute("""
-        SELECT g.*, c.nome as categoria_nome
-        FROM gastos g
-        LEFT JOIN categorias c ON g.categoria_id = c.id
-        WHERE strftime('%m', g.data) = ? 
-        AND strftime('%Y', g.data) = ?
-        ORDER BY g.data DESC
-    """, (f"{mes:02d}", str(ano)))
+    SELECT g.*, c.nome as categoria_nome
+    FROM gastos g
+    LEFT JOIN categorias c ON g.categoria_id = c.id
+    WHERE g.usuario_id = ?
+    AND strftime('%m', g.data) = ? 
+    AND strftime('%Y', g.data) = ?
+    ORDER BY g.data DESC
+    """, (user_id, f"{mes:02d}", str(ano)))
 
     gastos = rows_to_dict(cursor.fetchall())
 
-    cursor.execute("SELECT * FROM cartoes")
+    cursor.execute("SELECT * FROM cartoes WHERE usuario_id = ?", (user_id,))
     cartoes = rows_to_dict(cursor.fetchall())
 
     cursor.execute("SELECT * FROM categorias")
     categorias = rows_to_dict(cursor.fetchall())
 
-
     cursor.execute("""
-        SELECT 
-            c.id,
-            c.nome,
-            COALESCE(SUM(g.valor_previsto), 0) as total
-        FROM cartoes c
-        LEFT JOIN gastos g 
-            ON g.cartao_id = c.id
-            AND strftime('%m', g.data) = ?
-            AND strftime('%Y', g.data) = ?
-        GROUP BY c.id
-    """, (f"{mes:02d}", str(ano)))
+    SELECT 
+        c.id,
+        c.nome,
+        COALESCE(SUM(g.valor_previsto), 0) as total
+    FROM cartoes c
+    LEFT JOIN gastos g 
+        ON g.cartao_id = c.id
+        AND g.usuario_id = ?
+        AND strftime('%m', g.data) = ?
+        AND strftime('%Y', g.data) = ?
+    WHERE c.usuario_id = ?
+    GROUP BY c.id
+    """, (user_id, f"{mes:02d}", str(ano), user_id))
 
     totais_cartao = rows_to_dict(cursor.fetchall())
 
     cursor.execute("""
-        SELECT cartao_id, pago
-        FROM faturas
-        WHERE mes = ? AND ano = ?
-    """, (mes, ano))
+    SELECT cartao_id, pago
+    FROM faturas
+    WHERE usuario_id = ?
+    AND mes = ? AND ano = ?
+    """, (user_id, mes, ano))
 
     faturas_db = cursor.fetchall()
-
     status_faturas = {f["cartao_id"]: f["pago"] for f in faturas_db}
 
     for t in totais_cartao:
@@ -414,11 +465,12 @@ def gastos():
             status_faturas[t["id"]] = 0
 
     cursor.execute("""
-        SELECT COALESCE(SUM(valor_previsto), 0)
-        FROM gastos
-        WHERE strftime('%m', data) = ? 
-        AND strftime('%Y', data) = ?
-    """, (f"{mes:02d}", str(ano)))
+    SELECT COALESCE(SUM(valor_previsto), 0)
+    FROM gastos
+    WHERE usuario_id = ?
+    AND strftime('%m', data) = ? 
+    AND strftime('%Y', data) = ?
+    """, (user_id, f"{mes:02d}", str(ano)))
 
     total_mes = cursor.fetchone()[0]
 
@@ -442,10 +494,13 @@ def toggle_fatura(cartao_id, mes, ano):
     conn = get_db()
     cursor = conn.cursor()
 
+    user_id = get_user_id()
+
     cursor.execute("""
-        SELECT id, pago FROM faturas
-        WHERE cartao_id = ? AND mes = ? AND ano = ?
-    """, (cartao_id, mes, ano))
+    SELECT id, pago FROM faturas
+    WHERE usuario_id = ?
+    AND cartao_id = ? AND mes = ? AND ano = ?
+    """, (user_id, cartao_id, mes, ano))
 
     fatura = cursor.fetchone()
 
@@ -454,45 +509,50 @@ def toggle_fatura(cartao_id, mes, ano):
 
         # atualiza fatura
         cursor.execute("""
-            UPDATE faturas SET pago = ?
-            WHERE id = ?
+        UPDATE faturas SET pago = ?
+        WHERE id = ?
         """, (novo_status, fatura["id"]))
 
         # 🔥 AQUI ESTÁ O SEGREDO
         if novo_status == 1:
             # marcar como pago
             cursor.execute("""
-                UPDATE gastos
-                SET valor_pago = valor_previsto, pago = 1
-                WHERE cartao_id = ?
-                AND strftime('%m', data) = ?
-                AND strftime('%Y', data) = ?
-            """, (cartao_id, f"{mes:02d}", str(ano)))
+            UPDATE gastos
+            SET valor_pago = valor_previsto, pago = 1
+            WHERE usuario_id = ?
+            AND cartao_id = ?
+            AND strftime('%m', data) = ?
+            AND strftime('%Y', data) = ?
+            """, (user_id, cartao_id, f"{mes:02d}", str(ano)))
         else:
             # desmarcar pagamento
             cursor.execute("""
-                UPDATE gastos
-                SET valor_pago = 0, pago = 0
-                WHERE cartao_id = ?
-                AND strftime('%m', data) = ?
-                AND strftime('%Y', data) = ?
-            """, (cartao_id, f"{mes:02d}", str(ano)))
+            UPDATE gastos
+            SET valor_pago = 0, pago = 0
+            WHERE usuario_id = ?
+            AND cartao_id = ?
+            AND strftime('%m', data) = ?
+            AND strftime('%Y', data) = ?
+            """, (user_id, cartao_id, f"{mes:02d}", str(ano)))
 
     else:
         # cria fatura já paga
+        user_id = get_user_id()
+
         cursor.execute("""
-            INSERT INTO faturas (cartao_id, mes, ano, pago)
-            VALUES (?, ?, ?, 1)
-        """, (cartao_id, mes, ano))
+        INSERT INTO faturas (usuario_id, cartao_id, mes, ano, pago)
+        VALUES (?, ?, ?, ?, 1)
+        """, (user_id, cartao_id, mes, ano))
 
         # 🔥 garantir que gastos também sejam pagos
         cursor.execute("""
-            UPDATE gastos
-            SET valor_pago = valor_previsto, pago = 1
-            WHERE cartao_id = ?
-            AND strftime('%m', data) = ?
-            AND strftime('%Y', data) = ?
-        """, (cartao_id, f"{mes:02d}", str(ano)))
+        UPDATE gastos
+        SET valor_pago = valor_previsto, pago = 1
+        WHERE usuario_id = ?
+        AND cartao_id = ?
+        AND strftime('%m', data) = ?
+        AND strftime('%Y', data) = ?
+        """, (user_id, cartao_id, f"{mes:02d}", str(ano)))
 
     conn.commit()
     conn.close()
@@ -507,15 +567,18 @@ def ganhos():
     conn = get_db()
     cursor = conn.cursor()
 
+    user_id = get_user_id()
+    
     if request.method == "POST":
         cursor.execute("""
-            INSERT INTO ganhos (descricao, valor, data, tipo)
-            VALUES (?, ?, ?, ?)
+        INSERT INTO ganhos (descricao, valor, data, tipo, usuario_id)
+        VALUES (?, ?, ?, ?, ?)
         """, (
             request.form["descricao"],
             float(request.form["valor"]),
             request.form["data"],
-            request.form["tipo"]
+            request.form["tipo"],
+            user_id
         ))
 
         conn.commit()
@@ -528,21 +591,23 @@ def ganhos():
     mes, ano = get_mes_ano()
 
     cursor.execute("""
-        SELECT * FROM ganhos
-        WHERE strftime('%m', data) = ?
-        AND strftime('%Y', data) = ?
-        ORDER BY data DESC
-    """, (f"{mes:02d}", str(ano)))
+    SELECT * FROM ganhos
+    WHERE usuario_id = ?
+    AND strftime('%m', data) = ?
+    AND strftime('%Y', data) = ?
+    ORDER BY data DESC
+    """, (user_id, f"{mes:02d}", str(ano)))
 
     ganhos = rows_to_dict(cursor.fetchall())
 
     cursor.execute("""
-        SELECT tipo, SUM(valor) as total
-        FROM ganhos
-        WHERE strftime('%m', data) = ?
-        AND strftime('%Y', data) = ?
-        GROUP BY tipo
-    """, (f"{mes:02d}", str(ano)))
+    SELECT tipo, SUM(valor) as total
+    FROM ganhos
+    WHERE usuario_id = ?
+    AND strftime('%m', data) = ?
+    AND strftime('%Y', data) = ?
+    GROUP BY tipo
+    """, (user_id, f"{mes:02d}", str(ano)))
 
     ganhos_categoria = rows_to_dict(cursor.fetchall())
 
@@ -577,21 +642,24 @@ def cartoes():
         limite = float(request.form["limite"])
 
         cursor.execute("""
-            INSERT INTO cartoes (nome, dia_vencimento, dia_fechamento, limite)
-            VALUES (?, ?, ?, ?)
-        """, (nome, vencimento, fechamento, limite))
+        INSERT INTO cartoes (nome, dia_vencimento, dia_fechamento, limite, usuario_id)
+        VALUES (?, ?, ?, ?, ?)
+        """, (nome, vencimento, fechamento, limite, get_user_id()))
 
         conn.commit()
         return redirect("/cartoes")
 
     # GET
+    user_id = get_user_id()
+
     cursor.execute("""
         SELECT id, COALESCE(nome, 'Sem nome') as nome, dia_vencimento, dia_fechamento
-        FROM cartoes
-    """)
+        FROM cartoes WHERE usuario_id = ?
+    """, (user_id,))
 
     # Buscar cartões
-    cursor.execute("SELECT * FROM cartoes")
+    user_id = get_user_id()
+    cursor.execute("SELECT * FROM cartoes WHERE usuario_id = ?", (user_id,))
     cartoes = rows_to_dict(cursor.fetchall())
 
     # 🔥 BUSCA CATEGORIAS ANTES DE FECHAR
@@ -611,7 +679,10 @@ def cartoes():
 def deletar_cartao(id):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM cartoes WHERE id = ?", (id,))
+    cursor.execute(
+    "DELETE FROM cartoes WHERE id = ? AND usuario_id = ?",
+    (id, get_user_id())
+    )
     conn.commit()
     conn.close()
     # Se for GET, redireciona de volta
@@ -628,24 +699,27 @@ def investimentos():
     conn = get_db()
     cursor = conn.cursor()
 
+    user_id = get_user_id()
+
     if request.method == "POST":
         cursor.execute("""
-            INSERT INTO investimentos (nome, tipo, instituicao, valor, valor_atual, data)
-            VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO investimentos (nome, tipo, instituicao, valor, valor_atual, data, usuario_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
             request.form["nome"],
             request.form["tipo"],
             request.form["instituicao"],
             float(request.form["valor"]),
             float(request.form["valor_atual"]),
-            request.form["data"]
+            request.form["data"],
+            user_id
         ))
 
         conn.commit()
         return redirect("/investimentos")
 
     # BUSCAR DADOS
-    cursor.execute("SELECT * FROM investimentos ORDER BY data DESC")
+    cursor.execute("SELECT * FROM investimentos WHERE usuario_id = ? ORDER BY data ASC", (user_id,))
     investimentos = rows_to_dict(cursor.fetchall())
 
     # TOTAL INVESTIDO
@@ -673,26 +747,34 @@ def investimentos():
 # =========================
 @app.route("/desafios", methods=["GET", "POST"])
 def desafios():
+    user_id = get_user_id()
     conn = get_db()
     cursor = conn.cursor()
 
     if request.method == "POST":
         cursor.execute("""
-            INSERT INTO desafios (titulo, descricao, valor_meta, valor_atual, data_limite, link)
-            VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO desafios (
+            titulo, descricao, valor_meta, valor_atual,
+            data_limite, link, usuario_id
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
             request.form["titulo"],
             request.form["descricao"],
             float(request.form.get("valor_meta") or 0),
             float(request.form.get("valor_atual", 0)),
             request.form["data_limite"],
-            request.form.get("link")
+            request.form.get("link"),
+            user_id
         ))
 
         conn.commit()
         return redirect("/desafios")
 
-    cursor.execute("SELECT * FROM desafios ORDER BY data_limite ASC")
+    cursor.execute(
+    "SELECT * FROM desafios WHERE usuario_id = ? ORDER BY data_limite ASC",
+    (user_id,)
+    )
     desafios = rows_to_dict(cursor.fetchall())
 
     # CALCULAR PROGRESSO
@@ -714,13 +796,14 @@ def toggle_desafio(id):
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT concluido FROM desafios WHERE id = ?", (id,))
+    user_id = get_user_id()
+    cursor.execute("SELECT concluido FROM desafios WHERE usuario_id = ? AND id = ?", (user_id, id))
     status = cursor.fetchone()["concluido"]
 
     cursor.execute("""
-        UPDATE desafios
-        SET concluido = ?
-        WHERE id = ?
+    UPDATE desafios
+    SET concluido = ?
+    WHERE id = ? AND usuario_id = ?
     """, (0 if status else 1, id))
 
     conn.commit()
@@ -732,6 +815,7 @@ def toggle_desafio(id):
 # =========================
 # PROTEÇÃO SISTEMA
 # =========================
+
 @app.before_request
 def proteger():
     if request.path.startswith("/static"):
@@ -746,6 +830,7 @@ def proteger():
     # se não estiver autenticado → bloqueia
     if not session.get("auth"):
         return "Acesso negado"
+
 # =========================
 # START
 # =========================

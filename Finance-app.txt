@@ -23,9 +23,13 @@ finance-app/static/css/layout.css
 finance-app/static/css/pages/cartoes.css
 finance-app/static/css/pages/dashboard.css
 finance-app/static/css/pages/gastos.css
+finance-app/static/css/pages/investimentos.css
+finance-app/static/css/pages/Desafios.css
+finance-app/static/css/pages/ganhos.css
 finance-app/static/js/dashboard.js
 finance-app/static/js/ganhos.js
 finance-app/static/js/gastos.js
+finance-app/static/js/investimentos.js
 finance-app/templates/base.html
 finance-app/templates/cartoes.html
 finance-app/templates/dashboard.html
@@ -51,18 +55,14 @@ Melhorias para implementar e correções necessárias
 - Tudo certo
 
 --- Cartões
-- Tudo certo
+- Editar cartões ja cadastrados
 
 --- Investimentos
-- Colocar total investido
-- Adicionar campos de onde está investido
-- Adicionar um gráfico para acompanhamos evolução do investimento
+- Tudo certo
 
 ---Desafios
-- Adicionar conquistas a serem feitas
-- Metas a serem atingidas
-- previsãoo de valor de cada 
-- Fazer em formato de checklist
-- Link (Opcional)
+- Tudo certo
 
-https://seu-app.onrender.com/?token=21033007
+o site será usada por 2 pessoas, eu e minha noiva, seria legal se podessemos dividir, tipo, cadastrar gastos no nome dela ou no meu nome, os dados do dashboard mostrar separado, então agora precisamos salvar os dados por pessoa
+
+https://finance-app-beit.onrender.com

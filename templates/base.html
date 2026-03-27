@@ -4,67 +4,100 @@
     <meta charset="UTF-8">
     <title>{% block title %}Finance App{% endblock %}</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Ícones -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+<!-- CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
-    <!-- Chart -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Ícones -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 </head>
 <body>
 
 <div class="app">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <h2 class="logo">💰 Finance</h2>
 
-        <nav>
-        <a href="/dashboard" class="active">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <h2 class="logo">💰 Finance</h2>
+
+    <nav>
+
+        <a href="/dashboard" class="{% if request.path == '/dashboard' %}active{% endif %}">
             <i data-lucide="layout-dashboard"></i>
             <span>Dashboard</span>
         </a>
 
-        <a href="/gastos">
+        <a href="/gastos" class="{% if request.path.startswith('/gastos') %}active{% endif %}">
             <i data-lucide="arrow-down-circle"></i>
             <span>Gastos</span>
         </a>
 
-        <a href="/ganhos">
+        <a href="/ganhos" class="{% if request.path.startswith('/ganhos') %}active{% endif %}">
             <i data-lucide="arrow-up-circle"></i>
             <span>Ganhos</span>
         </a>
 
-        <a href="/cartoes">
+        <a href="/cartoes" class="{% if request.path.startswith('/cartoes') %}active{% endif %}">
             <i data-lucide="credit-card"></i>
             <span>Cartões</span>
         </a>
 
-        <a href="/investimentos">
+        <a href="/investimentos" class="{% if request.path.startswith('/investimentos') %}active{% endif %}">
             <i data-lucide="trending-up"></i>
             <span>Investimentos</span>
         </a>
 
-        <a href="/desafios">
+        <a href="/desafios" class="{% if request.path.startswith('/desafios') %}active{% endif %}">
             <i data-lucide="target"></i>
             <span>Desafios</span>
         </a>
-    </nav>
-    </aside>
 
-    <!-- CONTEÚDO -->
+    </nav>
+</aside>
+
+<!-- CONTEÚDO -->
+<div class="main-area">
+
+    <!-- TOPO COM USUÁRIO -->
+    <header class="topbar">
+        <div class="user-switch">
+
+            <span>Usuário:</span>
+
+            <select onchange="trocarUsuario(this.value)">
+                {% for u in usuarios_global %}
+                    <option value="{{ u.id }}"
+                        {% if u.id == user_id_logado %}selected{% endif %}>
+                        {{ u.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+
+        </div>
+    </header>
+
     <main class="content">
         {% block content %}{% endblock %}
     </main>
 
 </div>
 
+
+</div>
+
 <script>
     lucide.createIcons();
+
+    function trocarUsuario(userId) {
+        window.location.href = "/trocar-usuario/" + userId;
+    }
 </script>
 
 </body>
