@@ -731,8 +731,11 @@ def toggle_desafio(id):
 # =========================
 @app.before_request
 def proteger():
+    if request.path.startswith("/static"):
+        return
+
     token = request.args.get("token")
-    if token != "123":
+    if token != "21033007":
         return "Acesso negado"
 # =========================
 # START
