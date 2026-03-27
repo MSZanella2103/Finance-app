@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Ganhos{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Ganhos</h1>
+
+<div class="grid-cards">
+
+    <div class="card">
+        <h3>Filtro</h3>
+
+        <form method="GET" class="form-inline">
+            <input type="number" name="mes" min="1" max="12" value="{{ mes }}">
+            <input type="number" name="ano" value="{{ ano }}">
+            <button type="submit">Filtrar</button>
+        </form>
+    </div>
+
+    <div class="card highlight">
+        <h3>Total do mês: R$ {{ total_mes }}</h3>
+        <div class="resumo-categorias">
+            {% for g in ganhos_categoria %}
+                <div class="resumo-item">
+                    <span>{{ g.tipo or "Sem categoria" }}</span>
+                    <strong>R$ {{ g.total }}</strong>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<div class="card">
+    <h3>Lista de ganhos</h3>
+
+    <div class="lista-ganhos">
+        {% for g in ganhos %}
+            <div class="item ganho-item" data-id="{{ g.id }}">
+                <div>
+                    <strong class="editavel" data-id="{{ g.id }}">
+                        {{ g.descricao }}
+                    </strong><br>
+
+                    <span class="text-muted">
+                        {{ g.data }} • {{ g.tipo }}
+                    </span>
+                </div>
+
+                <div class="acoes">
+                    <div class="valor editavel-valor" data-id="{{ g.id }}">
+                        R$ {{ "%.2f"|format(g.valor) }}
+                    </div>
+
+                    <button class="btn-danger btn-delete" data-id="{{ g.id }}">🗑️</button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<button class="fab" id="btnAbrirModal">+</button>
+
+<div id="modalGanho" class="modal">
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h2>Novo ganho</h2>
+            <span class="close" id="btnFecharModal">&times;</span>
+        </div>
+
+        <form method="POST" id="formGanho">
+
+            <input name="descricao" placeholder="Descrição" required>
+
+            <input name="valor" type="number" step="0.01" required>
+
+            <input name="data" type="date" value="{{ data_hoje }}" required>
+
+            <select name="tipo">
+                <option value="Salário">Salário</option>
+                <option value="Uber">Uber</option>
+                <option value="PLR">PLR</option>
+                <option value="Extra">Extra</option>
+                <option value="Investimento">Investimento</option>
+            </select>
+
+            <button type="submit">Salvar</button>
+
+        </form>
+
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/ganhos.js') }}"></script>
+
+{% endblock %}

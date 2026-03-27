@@ -1,0 +1,77 @@
+.text-muted {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* GRID */
+.grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+/* FORM */
+.form-investimento {
+    gap: 15px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+/* LISTA */
+.lista-investimentos {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.investimento-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    transition: 0.2s;
+}
+
+.investimento-item:hover {
+    transform: translateX(5px);
+    border-color: var(--primary);
+}
+
+/* VALORES */
+.valores {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+}
+
+.valores strong {
+    font-size: 16px;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .investimento-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .valores {
+        width: 100%;
+        text-align: left;
+    }
+
+}

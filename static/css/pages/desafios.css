@@ -1,0 +1,105 @@
+.text-muted {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* FORM */
+.form-desafio {
+    gap: 15px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+/* LISTA */
+.lista-desafios {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* ITEM */
+.desafio-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    transition: 0.2s;
+}
+
+.desafio-item:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary);
+}
+
+/* CONCLUÍDO */
+.desafio-item.concluido {
+    opacity: 0.6;
+    border-color: var(--success);
+    transform: scale(0.98);
+}
+
+/* INFO */
+.info {
+    flex: 1;
+}
+
+.topo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* LINK */
+.link {
+    display: inline-block;
+    margin-top: 5px;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 13px;
+}
+
+/* PROGRESSO */
+.progresso {
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.barra {
+    width: 100%;
+    height: 10px;
+    background: #1e293b;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.barra-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #3b82f6);
+    transition: width 0.5s ease;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .desafio-item {
+        flex-direction: column;
+    }
+
+    .progresso {
+        width: 100%;
+    }
+
+}

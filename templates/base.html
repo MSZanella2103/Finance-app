@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Finance App{% endblock %}</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Ícones -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <h2 class="logo">💰 Finance</h2>
+
+        <nav>
+        <a href="/dashboard" class="active">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Dashboard</span>
+        </a>
+
+        <a href="/gastos">
+            <i data-lucide="arrow-down-circle"></i>
+            <span>Gastos</span>
+        </a>
+
+        <a href="/ganhos">
+            <i data-lucide="arrow-up-circle"></i>
+            <span>Ganhos</span>
+        </a>
+
+        <a href="/cartoes">
+            <i data-lucide="credit-card"></i>
+            <span>Cartões</span>
+        </a>
+
+        <a href="/investimentos">
+            <i data-lucide="trending-up"></i>
+            <span>Investimentos</span>
+        </a>
+
+        <a href="/desafios">
+            <i data-lucide="target"></i>
+            <span>Desafios</span>
+        </a>
+    </nav>
+    </aside>
+
+    <!-- CONTEÚDO -->
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+
+</div>
+
+<script>
+    lucide.createIcons();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,86 @@
+.chart-container {
+    width: 100%;
+    max-width: 400px;
+    height: 300px;
+    margin: auto;
+}
+
+.page-title {
+    margin-bottom: 20px;
+}
+
+.filtro-mes {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.btn-secundario {
+    padding: 6px 12px;
+    background: #1e293b;
+    color: #fff;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+/* GRID CARDS */
+.grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 900px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* DESTAQUE */
+.card.highlight {
+    border: 1px solid var(--primary);
+    background: linear-gradient(145deg, #020617, #0f172a);
+}
+
+/* GRID GRÁFICOS */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* BARRA DE PROGRESSO */
+.barra {
+    width: 100%;
+    height: 25px;
+    background: #1e293b;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.barra-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #22c55e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: white;
+    transition: width 0.5s ease;
+}

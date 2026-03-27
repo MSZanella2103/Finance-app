@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Gastos{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Gastos</h1>
+
+<!-- TOPO -->
+<div class="grid-cards">
+
+    <div class="card">
+        <h3>Filtro</h3>
+
+        <form method="GET" class="form-inline" id="formFiltro">
+            <input type="number" name="mes" min="1" max="12" value="{{ mes }}" placeholder="Mês">
+            <input type="number" name="ano" value="{{ ano }}" placeholder="Ano">
+            <button type="submit">Filtrar</button>
+        </form>
+    </div>
+
+    <div class="card highlight">
+        <h3>Total do mês</h3>
+        <p class="valor">R$ {{ total_mes }}</p>
+    </div>
+
+</div>
+
+<!-- FATURAS -->
+<div class="card">
+    <h3>Faturas</h3>
+
+    {% for t in totais_cartao %}
+        <div class="item">
+            <div>
+                <strong>{{ t.nome }}</strong><br>
+                <span class="text-muted">R$ {{ t.total }}</span>
+            </div>
+
+            <div class="acoes">
+                {% if status_faturas[t.id] == 1 %}
+                    <span class="badge pago">Pago</span>
+                {% else %}
+                    <span class="badge pendente">Pendente</span>
+                {% endif %}
+                {% if t.id %}
+                    <a class="btn" href="/toggle_fatura/{{ t.id }}/{{ mes }}/{{ ano }}">
+                        {% if status_faturas[t.id] == 1 %}
+                            Desfazer
+                        {% else %}
+                            Pagar
+                        {% endif %}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- LISTA -->
+<div class="card">
+    <h3>Lista de gastos</h3>
+
+    <div class="lista-gastos">
+        {% for g in gastos %}
+            <div class="item gasto-item" data-id="{{ g.id }}">
+                <div>
+                    <strong class="editavel" data-id="{{ g.id }}">{{ g.descricao }}</strong><br>
+
+                    <span class="text-muted">
+                        {{ g.data }} • {{ g.categoria_nome if g.categoria_nome else "Sem categoria" }}
+                        • {{ g.parcela_atual }}/{{ g.parcelas_total }}
+                    </span>
+
+                    <div>
+                        <span class="badge">
+                            {{ g.tipo }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="acoes">
+                    <div class="valor editavel-valor" data-id="{{ g.id }}">
+                        R$ {{ g.valor_previsto }}
+                    </div>
+
+                    <button class="btn-danger btn-delete" data-id="{{ g.id }}">🗑️</button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="btnAbrirModal">+</button>
+
+<!-- MODAL -->
+<div id="modalGasto" class="modal">
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h2>Novo gasto</h2>
+            <span class="close" id="btnFecharModal">&times;</span>
+        </div>
+
+        <form method="POST" class="form" id="formGasto">
+
+            <input name="descricao" placeholder="Descrição" required>
+
+            <div class="form-inline">
+                <input name="valor" type="number" step="0.01" placeholder="Valor" required>
+                <input name="data" type="date" value="{{ data_hoje }}" required>
+            </div>
+
+            <div class="form-inline">
+                <select name="categoria_id">
+                    {% for c in categorias %}
+                        <option value="{{ c.id }}">{{ c.nome }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="cartao_id">
+                    <option value="">Sem cartão</option>
+                    {% for c in cartoes %}
+                        <option value="{{ c.id }}">
+                            {{ c.nome }} (vence dia {{ c.dia_vencimento }})
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <select name="forma_pagamento">
+                    <option value="credito">Cartão de Crédito</option>
+                    <option value="debito">Débito</option>
+                    <option value="pix">PIX</option>
+                </select>
+            </div>
+
+            <div class="form-inline">
+                <label><input type="radio" name="tipo" value="variavel" checked> Variável</label>
+                <label><input type="radio" name="tipo" value="fixa"> Fixa</label>
+            </div>
+
+            <input name="parcelas" type="number" min="1" value="1">
+
+            <button type="submit">Salvar</button>
+        </form>
+
+    </div>
+</div>
+
+<!-- IMPORT JS -->
+<script src="{{ url_for('static', filename='js/gastos.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Dashboard</h1>
+
+<h2>
+    {% if modo_anual %}
+        Ano {{ ano }}
+    {% else %}
+        {{ "%02d"|format(mes) }}/{{ ano }}
+    {% endif %}
+</h2>
+
+<div class="filtro-mes">
+
+    <form method="GET">
+        <select name="mes">
+            {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if m == mes %}selected{% endif %}>
+                    {{ "%02d"|format(m) }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <input type="number" name="ano" value="{{ ano }}" min="2000" max="2100">
+
+        <button type="submit">Filtrar</button>
+    </form>
+
+    <!-- BOTÃO ANUAL -->
+    <a href="/dashboard?anual=1&ano={{ ano }}" class="btn-secundario">
+        Ver ano inteiro
+    </a>
+
+    <!-- VOLTAR PARA MÊS -->
+    <a href="/dashboard" class="btn-secundario">
+        Mês atual
+    </a>
+
+</div>
+
+<!-- RESUMO -->
+<div class="grid-cards">
+
+    <div class="card">
+        <h3>Ganhos</h3>
+        <p class="valor positivo">R$ {{ total_ganhos }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Gastos</h3>
+        <p class="valor negativo">R$ {{ total_previsto }}</p>
+    </div>
+
+    <div class="card highlight">
+        <h3>Saldo</h3>
+        <p class="valor 
+            {% if saldo >= 0 %}
+                positivo
+            {% else %}
+                negativo
+            {% endif %}
+        ">
+            R$ {{ saldo }}
+        </p>
+    </div>
+
+</div>
+
+<!-- COMPARAÇÃO -->
+<div class="card highlight">
+    <h3>Comparação com mês anterior</h3>
+
+    <p class="valor">R$ {{ total_previsto }}</p>
+
+    <span class="variacao 
+        {% if total_previsto > total_anterior %}
+            negativo
+        {% else %}
+            positivo
+        {% endif %}
+    ">
+        {% if total_previsto > total_anterior %}
+            ↑ Gastando mais
+        {% else %}
+            ↓ Economizando
+        {% endif %}
+    </span>
+</div>
+
+<!-- USO CARTÃO -->
+<div class="card">
+    <h3>Uso dos cartões</h3>
+
+    {% for c in cartoes_dashboard %}
+        <div style="margin-bottom:15px;">
+            <strong>{{ c.nome }}</strong>
+
+            <div class="barra">
+                <div class="barra-fill" style="width: {{ c.percentual }}%">
+                    {{ "%.1f"|format(c.percentual) }}%
+                </div>
+            </div>
+
+            <small class="text-muted">
+                R$ {{ "%.2f"|format(c.gasto) }} de R$ {{ "%.2f"|format(c.limite) }}
+            </small>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <h3>Ganhos vs Gastos</h3>
+    <div class="chart-container">
+        <canvas id="graficoComparativo"></canvas>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Ganhos por categoria</h3>
+    <div class="chart-container">
+        <canvas id="graficoGanhos"></canvas>
+    </div>
+</div>
+
+<!-- GRÁFICOS -->
+<div class="grid-2">
+
+    <div class="card">
+        <h3>Gastos por categoria</h3>
+        <div class="chart-container">
+            <canvas id="graficoCategoria"></canvas>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Evolução mensal</h3>
+        <div class="chart-container">
+            <canvas id="graficoLinha"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<!-- Ganhos -->
+<h3>Ganhos por categoria</h3>
+<div class="lista-categorias">
+    {% for g in ganhos_categoria %}
+        <div class="item">
+            <span>{{ g.nome }}</span>
+            <strong>R$ {{ g.total }}</strong>
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+    const categorias = {{ categorias | tojson }};
+    const dadosMensais = {{ dados_mensais | tojson }};;
+    const ganhosCategoria = {{ ganhos_categoria | tojson }};
+    const totalGanhos = {{ total_ganhos }};
+    const totalGastos = {{ total_previsto }};
+</script>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+{% endblock %}

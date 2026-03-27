@@ -1,0 +1,9 @@
+@import url('base.css');
+@import url('layout.css');
+@import url('components.css');
+
+/* páginas */
+@import url('pages/dashboard.css');
+@import url('pages/gastos.css');
+@import url('pages/cartoes.css');
+@import url('pages/ganhos.css');

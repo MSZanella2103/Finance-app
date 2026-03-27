@@ -1,0 +1,202 @@
+.text-muted {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* GRID TOPO */
+.grid-cards {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+/* AÇÕES */
+.acoes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn {
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--primary);
+    color: white;
+}
+
+.btn-delete {
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* LISTA */
+.lista-gastos {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+/* ITEM GASTO */
+.gasto-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    transition: 0.2s;
+}
+
+.gasto-item:hover {
+    transform: translateX(5px);
+    border-color: var(--primary);
+    background: rgba(59,130,246,0.05);
+}
+
+.valor {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* BOTÃO FLUTUANTE */
+.fab {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    font-size: 28px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    transition: 0.2s;
+    z-index: 1000;
+}
+
+.fab:hover {
+    transform: scale(1.1);
+    background: var(--primary-hover);
+}
+
+/* MODAL FUNDO */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.3s;
+    z-index: 999;
+}
+
+/* MODAL ATIVO */
+.modal.ativo .modal-content {
+    opacity: 1;
+}
+
+.modal.ativo {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* CONTEÚDO */
+.modal-content {
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    opacity: 0;
+
+    border: 1px solid var(--border);
+
+    transform: translateY(20px);
+    transition: 0.3s;
+}
+
+.modal.ativo .modal-content {
+    transform: translateY(0);
+}
+
+/* HEADER */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.close {
+    cursor: pointer;
+    font-size: 20px;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 80px;
+    right: 25px;
+    background: var(--bg-secondary);
+    color: white;
+    padding: 12px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: 0.3s;
+    z-index: 2000;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+    .grid-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .gasto-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .acoes {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .fab {
+        bottom: 15px;
+        right: 15px;
+    }
+
+}

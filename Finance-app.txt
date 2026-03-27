@@ -1,0 +1,66 @@
+finance-app/
+│
+├── app.py
+├── database.db
+├── models/
+├── routes/
+├── templates/
+│   ├── dashboard.html
+│   └── gastos.html
+└── static/
+|   └── style.css
+│
+└── requirements.txt
+
+finance-app/
+finance-app/.venv
+finance-app/models/
+finance-app/routes/
+finance-app/static/css/style.css
+finance-app/static/css/base.css
+finance-app/static/css/components.css
+finance-app/static/css/layout.css
+finance-app/static/css/pages/cartoes.css
+finance-app/static/css/pages/dashboard.css
+finance-app/static/css/pages/gastos.css
+finance-app/static/js/dashboard.js
+finance-app/static/js/ganhos.js
+finance-app/static/js/gastos.js
+finance-app/templates/base.html
+finance-app/templates/cartoes.html
+finance-app/templates/dashboard.html
+finance-app/templates/gastos.html
+finance-app/templates/ganhos.html
+finance-app/app.py
+finance-app/database.db
+finance-app/init_db.py
+finance-app/requirements.txt
+
+
+Estou desenvolvendo um site de controle financeiro, o site já possui bastante coisa, porem ainda falta implementações, como criação de algumas telas e ajuste de algumas funções, segue estruta atual das pastas
+
+
+Melhorias para implementar e correções necessárias
+--- Dashboard:
+- Tudo certo
+
+--- Gastos
+- Tudo certo
+
+--- Ganhos
+- Tudo certo
+
+--- Cartões
+- Tudo certo
+
+--- Investimentos
+- Colocar total investido
+- Adicionar campos de onde está investido
+- Adicionar um gráfico para acompanhamos evolução do investimento
+
+---Desafios
+- Adicionar conquistas a serem feitas
+- Metas a serem atingidas
+- previsãoo de valor de cada 
+- Fazer em formato de checklist
+- Link (Opcional)

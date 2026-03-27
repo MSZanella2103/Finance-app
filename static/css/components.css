@@ -1,0 +1,108 @@
+/* FORM */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-inline {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* INPUTS */
+input, select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-main);
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* BOTÕES */
+button {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: var(--primary-hover);
+}
+
+/* CARDS */
+.card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    padding: 15px;
+    border-radius: 12px;
+    transition: 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary);
+}
+
+.variacao {
+    font-size: 12px;
+    margin-top: 5px;
+    display: inline-block;
+}
+
+.variacao.positivo {
+    color: var(--success);
+}
+
+.variacao.negativo {
+    color: var(--danger);
+}
+
+/* LISTA */
+.item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    background: var(--bg-secondary);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+/* BADGES */
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.pago {
+    background: var(--success);
+    color: white;
+}
+
+.pendente {
+    background: var(--danger);
+    color: white;
+}
+
+/* LINKS */
+.btn {
+    margin-left: 10px;
+    text-decoration: none;
+    color: var(--primary);
+}
+
+.btn-danger {
+    color: var(--danger);
+}
