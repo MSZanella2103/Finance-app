@@ -157,11 +157,11 @@
 </div>
 
 <script>
-    const categorias = {{ categorias | tojson }};
-    const dadosMensais = {{ dados_mensais | tojson }};;
-    const ganhosCategoria = {{ ganhos_categoria | tojson }};
-    const totalGanhos = {{ total_ganhos }};
-    const totalGastos = {{ total_previsto }};
+    window.categorias = {{ categorias | tojson }};
+    window.dadosMensais = {{ dados_mensais | tojson }};
+    window.ganhosCategoria = {{ ganhos_categoria | tojson }};
+    window.totalGanhos = {{ total_ganhos }};
+    window.totalGastos = {{ total_previsto }};
 </script>
 
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
